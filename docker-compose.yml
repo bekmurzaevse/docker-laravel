@@ -1,0 +1,69 @@
+services:
+    nginx:
+        image: nginx:latest
+        volumes:
+            - ./:/var/www/
+            - ./_docker/images/nginx/conf.d/:/etc/nginx/conf.d/
+        ports:
+            - "8000:80"
+        container_name: project_name_nginx
+        depends_on:
+            - php
+    php:
+        build:
+            context: .
+            dockerfile: ./_docker/images/php/Dockerfile
+        volumes:
+            - ./:/var/www/
+        depends_on:
+            - mysql
+        container_name: project_name_php
+    mysql:
+        image: mysql:8.2.0
+        restart: always
+        volumes:
+            - ./_docker/data/mysql:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --log_bin_trust_function_creators=1
+        env_file:
+            - ./_docker/images/mysql/mysql.env
+        container_name: project_name_mysql
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: project_name_pma
+        links:
+            - mysql
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            PMA_ARBITRARY: 1
+            UPLOAD_LIMIT: 100000000
+        restart: always
+        ports:
+            - "8081:80"
+    # redis:
+    #     image: redis:latest
+    #     restart: always
+    #     ports:
+    #         - "6379:6379"
+    #     volumes:
+    #         - ./_docker/data/redis:/data
+    #         # - /path/to/local/redis.conf:/usr/local/etc/redis/redis.conf
+    #     environment:
+    #         REDIS_PASSWORD: 12345
+    #         REDIS_PORT: 6379
+    #         REDIS_DATABASES: 16
+    #     container_name: project_name_redis
+    # mongodb:
+    #     image: mongo:latest
+    #     environment:
+    #         MONGO_INITDB_ROOT_USERNAME: root
+    #         MONGO_INITDB_ROOT_PASSWORD: root
+    #         MONGO_INITDB_DATABASE: mydb
+    #     ports:
+    #         - "27017:27017"
+    #     volumes:
+    #         - ./_docker/data/mongodb:/data/db
+    #     restart: always
+    #     container_name: project_mongodb
